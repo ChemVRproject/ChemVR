@@ -18,7 +18,7 @@ public class ReadFile : MonoBehaviour
 {
 	
 	public GameObject classbox;
-	//public Ray ray;
+	
 	// атомы
 	public GameObject thePrefab;
 	
@@ -27,7 +27,6 @@ public class ReadFile : MonoBehaviour
 	public GameObject thePrefabDoubleLink;
 	public GameObject thePrefabTripleLink;
 	public GameObject ruller;
-	//public GameObject transporter;
 	
 	// настройки отображения
 	int ViewAtom=0;
@@ -63,18 +62,7 @@ public class ReadFile : MonoBehaviour
 	public Material SkyGrey;
 	
 	// кнопки
-	//public GameObject button1;
-	//public GameObject button2;
-	//public GameObject button3;
-	//public GameObject button4;
-	//public GameObject button5;
-	//public GameObject buttonout1;
-	//public GameObject buttonout2;
-	//public GameObject buttonout3;
-	//public GameObject buttonout4;
-	//public GameObject buttonout5;
-	public GameObject buttonquant;
-	
+	public GameObject buttonquant;	
 	
 	public Slider frameslider;
 	public TMPro.TMP_Text framenumber;
@@ -91,7 +79,7 @@ public class ReadFile : MonoBehaviour
 	int FrameNumber = 1;
 	int Number;
 	
-	// массивы с инфой
+	// массивы с информацией
 	List<GameObject> generatedObjects = new List<GameObject>();
 	List<GameObject> selectedObjects = new List<GameObject>();
 	List<GameObject> generatedStatistic = new List<GameObject>();
@@ -518,12 +506,12 @@ public class ReadFile : MonoBehaviour
 	new Vector4(0.470588235f,	0.360784314f,	0.890196078f, 1f)
 	};
 	
-	// для камеры
-	
-	public Camera MainCamera;
+	// для камеры	
+	public Camera mainCamera;
 	public GameObject rightController;
 	public Rigidbody body;
 	public GameObject centreye;
+	public BoxCollider boxCollider;
 	
 	public GameObject buttonMD;
 	public GameObject buttonQ;
@@ -536,26 +524,27 @@ public class ReadFile : MonoBehaviour
 	public RectTransform graphContainerStatistic;
 	public GameObject Statistic;
 	
-	public GameObject CanvasStart;
-	public GameObject CanvasFile;
-	
 	private int PlayFrame = 0;
 	private Timer timer1; 
 	
-	private bool flag = false;
-	private bool flag2 = false;
+	public TMPro.TMP_Text selectedatom;
+	public TMPro.TMP_Text lastselectedatom;
+	private string RecordF;
+	private int variant=1;
 	
 	void Start()
 	{
-		//Thread.Sleep(2000);
-		//CanvasStart.SetActive(false);
 		body.freezeRotation = true;
 		body.useGravity = false;
 		body.mass = 0.1f;
 		body.drag = 10;
-		FileInfo fi = new FileInfo(Application.persistentDataPath + "/Result.txt");
+		System.Random rnd = new System.Random();
+		int data  = rnd.Next(100, 999);
+		RecordF = "/Result" + data.ToString() + ".txt";
+		FileInfo fi = new FileInfo(Application.persistentDataPath + RecordF);
 		fi.Create();
-		OnButtonDown2();
+		OnButtonDownXYZ(1);
+		SetBoxColliderSize();
     }	
    
 	void readFirstFrameXYZ () //во время первого чтения мы создаем атомы и связи
@@ -604,6 +593,7 @@ public class ReadFile : MonoBehaviour
 					newAtom.GetComponent<Renderer>().material.color = atomColor[atomnumber[massive[0]]-1];
 					generatedObjects.Add(newAtom);
 					findLinks(i, iVector, massive[0]);
+					//newAtom.GetComponent<BoxCollider>().size=newAtom.transform.localScale;
                 }
 				countLinks();
 				drawLinks();
@@ -688,6 +678,7 @@ public class ReadFile : MonoBehaviour
 					newAtom.transform.localScale = new Vector3(koef, koef, koef);
 					newAtom.GetComponent<Renderer>().material.color = atomColor[atomnumber[massive[0]]-1];
 					generatedObjects.Add(newAtom);
+					//newAtom.GetComponent<BoxCollider>().size=newAtom.transform.localScale;
 					findLinks(i, iVector, massive[0]);			
                 }
 				countLinks();
@@ -750,7 +741,7 @@ public class ReadFile : MonoBehaviour
 					}
 				float energy = molkoef*float.Parse(massive[5]);
 				
-				Inform2text.GetComponent<TMP_Text>().text = "Total enthalpy: " + "\n" + enthalpy.ToString() + " kJ/mol" + "\n" + "Total entropy correction: " + "\n" + entropy.ToString() + " kJ/mol" + "\n" + "Final Gibbs free energy: " + "\n" + energy.ToString() + " kJ/mol";
+				Inform2text.GetComponent<TMP_Text>().text = "Общая энтальпия: " + "\n" + enthalpy.ToString() + " kJ/mol" + "\n" + "Поправка на общую энтропию: " + "\n" + entropy.ToString() + " kJ/mol" + "\n" + "Финальная свободная энергия Гиббса: " + "\n" + energy.ToString() + " kJ/mol";
 			}
 		}
 		catch (Exception e)
@@ -974,11 +965,7 @@ public class ReadFile : MonoBehaviour
 					
 					GameObject newPlayer = GameObject.Find(massive[0]+"_"+i);
 					Vector3 iVector = new Vector3 (masAtomfloat[i,1], masAtomfloat[i,2], masAtomfloat[i,3]);
-					newPlayer.transform.position = iVector;
-
-					
-					
-							
+					newPlayer.transform.position = iVector;	
                 }
 				updateLinks();
 			}	
@@ -1069,6 +1056,8 @@ public class ReadFile : MonoBehaviour
 		lastselObj = thePrefab;
 		selectedObjects = new List<GameObject>();
 		selected = 0;
+		selectedatom.text = "0";
+		lastselectedatom.text = "0";
 		MatNorm = null;
 		foreach(var obj in generatedObjects)
 		{
@@ -1084,16 +1073,6 @@ public class ReadFile : MonoBehaviour
 		}
 		generatedCylinder = new List<GameObject>();
 	}
-	
-	public void SetButtonOut() //кнопка "выбрать файл"
-    {
-        buttonquant.SetActive(true);
-    }
-	
-	public void HideButtonOUT() //убрать кнопки с названиями файлов
-    {
-        buttonquant.SetActive(false);
-    }
 	
 	public void Downloading() 
 	{
@@ -1137,38 +1116,28 @@ public class ReadFile : MonoBehaviour
 			frameslider.value = FrameNumber;
 			buttonMD.SetActive(false);
 			buttonQ.SetActive(false);
-			CanvasStart.SetActive(false);
         }
     }
 	
-	public void BrowseFile()
-	{
-		CanvasStart.SetActive(false);
-		CanvasFile.SetActive(true);
-	}
-	
-	public void OnButtonDown1()
+	public void OnButtonDownXYZ(int x) //включить файл xyz из библиотеки 
     {
-		FileName = "004-MEL-BA.xyz";
-		string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-		WWW reader = new WWW(tempPath);
-		while ( ! reader.isDone) {}
-		PathF = Application.persistentDataPath + "/db/" + FileName;
-		TotalDestroyer();
-		MaxFrameNum=1;
-		frameslider.maxValue = MaxFrameNum;
-		frameslider.value = FrameNumber;
-		//CanvasFile.SetActive(false);	
-		readFirstFrameXYZ();
-		buttonQ.SetActive(false);
-		buttonMD.SetActive(true);
-		formatfile = 2;	
-        
-    }
-	
-	public void OnButtonDown2()
-    {
-		FileName = "MCA_1000fr.xyz";
+		if (x==1)
+		{
+			FileName = "M-BA-1000fr.xyz";
+		}
+		else if (x==2)
+		{
+			FileName = "M-CA-1000fr.xyz";
+		}	
+		else if (x==3)
+		{
+			FileName = "GLU-FRU-1000fr.xyz";
+		}	
+		else if (x==4)
+		{
+			FileName = "M-BA1-1000fr.xyz";
+		}
+		variant = x;
 		string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
 		WWW reader = new WWW(tempPath);
 		while ( ! reader.isDone) {}
@@ -1176,139 +1145,81 @@ public class ReadFile : MonoBehaviour
 		TotalDestroyer();
 		MaxFrameNum=1000;
 		frameslider.maxValue = MaxFrameNum;
-		frameslider.value = FrameNumber;	
+		frameslider.value = FrameNumber;
 		readFirstFrameXYZ();
-		buttonQ.SetActive(false);
 		buttonMD.SetActive(true);
-		formatfile = 2;			
+		formatfile = 2;	       
     }
 	
-	public void OnButtonDown3()
-    {
-		FileName = "MBA_500fr.xyz";
-		string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-		WWW reader = new WWW(tempPath);
-		while ( ! reader.isDone) {}
-		PathF = Application.persistentDataPath + "/db/" + FileName;
-		TotalDestroyer();
-		MaxFrameNum=500;
-		frameslider.maxValue = MaxFrameNum;
-		frameslider.value = FrameNumber;
-		readFirstFrameXYZ();
-		buttonQ.SetActive(false);
-		buttonMD.SetActive(true);
-		formatfile = 2;	
-    }
-	
-		
-	public void OnButtonDown4()
-    {
-		FileName = "007-BAox6-Pt.xyz";
-		string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-		WWW reader = new WWW(tempPath);
-		while ( ! reader.isDone) {}
-		PathF = Application.persistentDataPath + "/db/" + FileName;
-		TotalDestroyer();
-		MaxFrameNum=1;
-		frameslider.maxValue = MaxFrameNum;
-		frameslider.value = FrameNumber;
-		formatfile = 2;
-		readFirstFrameXYZ();
-		buttonMD.SetActive(false);
-		buttonQ.SetActive(false);
-    }
-	
-	public void OnButtonDown5()
-    {
-		FileName = "BAanion_Ag_Mel8.xyz";
-		string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-		WWW reader = new WWW(tempPath);
-		while ( ! reader.isDone) {}
-		PathF = Application.persistentDataPath + "/db/" + FileName;
-		TotalDestroyer();
-		MaxFrameNum=1;
-		frameslider.maxValue = MaxFrameNum;
-		frameslider.value = FrameNumber;
-		formatfile = 2;
-		//CanvasFile.SetActive(false);
-		readFirstFrameXYZ();
-		buttonMD.SetActive(false);
-		buttonQ.SetActive(false);
-    }
-	
-	public void OnButtonDownOUT(int x)
+	public void OnButtonDownOUT(int x) //включить файл out из библиотеки 
     { 
-		
 		if (x == 1)
 		{	
-			FileName = "CA-Mel-dimer.out"; 
-			string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-			WWW reader = new WWW(tempPath);
-			while ( ! reader.isDone) {}
-			PathF = Application.persistentDataPath + "/db/" + FileName;
+			FileName = "MEL-BA.out";
+			variant = 1;
 		}
 		else if (x==2)
 		{	
-			FileName = "004-MEL-BA.out"; 
-			string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-			WWW reader = new WWW(tempPath);
-			while ( ! reader.isDone) {}
-			PathF = Application.persistentDataPath + "/db/" + FileName;
+			FileName = "CA-MEL.out";
+			variant = 2;
 		}	
 		else if (x==3)
 		{	
-			FileName = "001-MEL.out"; 
-			string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-			WWW reader = new WWW(tempPath);
-			while ( ! reader.isDone) {}
-			PathF = Application.persistentDataPath + "/db/" + FileName;
+			FileName = "Glu-Fru.out";
+			variant = 3;
 		}	
 		else if (x==4)
 		{	
-			FileName = "CYA.out"; 
-			string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-			WWW reader = new WWW(tempPath);
-			while ( ! reader.isDone) {}
-			PathF = Application.persistentDataPath + "/db/" + FileName;
+			FileName = "M-BA1.out";
+			variant = 4;
 		}	
 		else if (x==5)
 		{	
-			FileName = "002-BA.out"; 
-			string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
-			WWW reader = new WWW(tempPath);
-			while ( ! reader.isDone) {}
-			PathF = Application.persistentDataPath + "/db/" + FileName;
+			FileName = "BA.out"; 
+			variant = 1;
+		}
+		else if (x==6)
+		{	
+			FileName = "CA.out"; 
+			variant = 2;
 		}	
+		else if (x==7)
+		{	
+			FileName = "MEL.out";
+			if (variant == 3)
+				variant = 1;
+		}	
+		else if (x==8)
+		{	
+			FileName = "GLU.out"; 
+			variant = 3;
+		}
+		else if (x==9)
+		{	
+			FileName = "FRU.out";
+			variant = 3;
+		}	
+		else if (x==10)
+		{	
+			FileName = "BA1.out";
+			variant = 4;
+		}			
+		string tempPath = System.IO.Path.Combine(Application.streamingAssetsPath, FileName);
+		WWW reader = new WWW(tempPath);
+		while ( ! reader.isDone) {}
+		PathF = Application.persistentDataPath + "/db/" + FileName;
 		TotalDestroyer();
 		MaxFrameNum=1;
 		frameslider.maxValue = MaxFrameNum;
 		frameslider.value = FrameNumber;
 		readFirstFrameOUT();
 		formatfile = 1;
-		//CanvasFile.SetActive(false);
-		buttonMD.SetActive(false);
 		buttonQ.SetActive(true);
-		//IRspectrum.gameObject.SetActive(true);
     }
 	
 	public void OnButtonExit()
 	{
 		Application.Quit();
-	}
-	
-	public void OnButtonFramePlay(int i) //кнопка "видео из фреймов"
-	{
-		if (i == 1)
-		{
-			int num = 0; 
-		TimerCallback tm = new TimerCallback(Count);
-        // создаем таймер
-        Timer timer = new Timer(tm, num, 0, 2000);
-		}
-		else 
-		{
-			// timer1.Dispose();
-		}
 	}
 	
 	public void Count(object obj)
@@ -1370,7 +1281,7 @@ public class ReadFile : MonoBehaviour
 		else readFirstFrameOUT();
 	}
 	
-	public void ButtonNewView()
+	public void ButtonNewView() //меняем вид атомов
 	{
 		if (ViewAtom==0)
 		{
@@ -1395,7 +1306,7 @@ public class ReadFile : MonoBehaviour
 		}	
 	}
 	
-	public void ButtonNewSky()
+	public void ButtonNewSky() //меняем фон
 	{
 		if (SkyBox==0)
 		{
@@ -1456,14 +1367,14 @@ public class ReadFile : MonoBehaviour
 		IRspectrum.gameObject.SetActive(true);
 	}
 	
-	public void ShowStatistic()
+	public void ShowStatistic() //обновляем статистику
 	{
 		foreach(var obj in generatedStatistic)
 		{
 			Destroy(obj);
 		}
 		generatedStatistic = new List<GameObject>();
-		Statistic.SetActive(true);	
+		//Statistic.SetActive(true);	
 		try
 		{	
 			using (StreamReader sr = new StreamReader(PathF))
@@ -1715,16 +1626,11 @@ public class ReadFile : MonoBehaviour
 		}
 		framenumber.text = FrameNumber.ToString()+'/'+ MaxFrameNum.ToString();
 		
-	//ниже скрипт для выделения		
-		
-		// показывает информацию об атоме
-		Ray ray = Camera.main.ScreenPointToRay(OVRInput.GetLocalControllerPosition(OVRInput.Controller.RTouch));
-
-        if (Physics.Raycast(ray, out hit, 100))
-        {
-             if (hit.collider != null)
-			 {
-				GameObject myObj = hit.collider.gameObject;
+	//ниже скрипт для выделения	атомов				
+            if (GameObject.Find(lastselectedatom.text))
+			{
+				GameObject myObj = GameObject.Find(lastselectedatom.text);
+				
 				if (myObj!=lastselObj) 
 				{
 					lastselObj.GetComponent<Renderer>().material = MatNorm;
@@ -1734,16 +1640,9 @@ public class ReadFile : MonoBehaviour
 					lastselObj=myObj;
 				}
 				
-				Inform.GetComponent<TMP_Text>().text = "Атом: " + myObj.name + "  Координаты: " + myObj.transform.position;
-				if ((OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))||(OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))||(Input.GetKey("up")))
-				{	
-					flag=true;
-				}
-				else if ((OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))||(OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch)))
-				{
-					flag=false;
-				}
-				if ((flag ==  true)&(flag2== false))
+				Inform.GetComponent<TMP_Text>().text = "Атом: " + myObj.name + "  Координаты: " + myObj.transform.position; // показывает информацию об атоме
+	
+				if (selected != int.Parse(selectedatom.text))
 				{
 					if (selected <= 6)
 					{
@@ -1765,6 +1664,7 @@ public class ReadFile : MonoBehaviour
 						newPlayer.transform.LookAt(selectedObjects[1].transform.position);
 						newPlayer.transform.localScale = new Vector3(3f, 3f, Vector3.Distance(selectedObjects[0].transform.position, selectedObjects[1].transform.position));
 						generatedCylinder.Add(newPlayer);
+						ShowStatistic();
 					}
 					else if (selected == 3)
 					{	
@@ -1776,6 +1676,7 @@ public class ReadFile : MonoBehaviour
 						newPlayer.transform.LookAt(selectedObjects[2].transform.position);
 						newPlayer.transform.localScale = new Vector3(3f, 3f, Vector3.Distance(selectedObjects[1].transform.position, selectedObjects[2].transform.position));
 						generatedCylinder.Add(newPlayer);
+						ShowStatistic();
 					}
 					else if ((selected == 4) || (selected == 5))
 					{	
@@ -1799,15 +1700,16 @@ public class ReadFile : MonoBehaviour
 						newPlayer2.transform.LookAt(selectedObjects[5].transform.position);
 						newPlayer2.transform.localScale = new Vector3(3f, 3f, Vector3.Distance(selectedObjects[4].transform.position, selectedObjects[5].transform.position));
 						generatedCylinder.Add(newPlayer2);
+						ShowStatistic();
+						
 					}
 					else 
 					{
 						clearselection();
-					}
-					flag2=flag;	 
+					} 
 				}
-			 }
-        }
+			}
+        
 	}
 		
 	public void SwapQMD(int i) // переключение между квантами и группами молекул
@@ -1815,29 +1717,44 @@ public class ReadFile : MonoBehaviour
 		if (i == 1) // включаем кванты
 		{
 			Inform2.SetActive(true);			
-			OnButtonDownOUT(1);
-			SetButtonOut();
+			OnButtonDownOUT(variant);
+			buttonquant.SetActive(true);
 			buttonQ.SetActive(true);
 			if (Statistic.activeSelf)
 			{
 				IRspectrum.gameObject.SetActive(true);
 			}
 		}
-		else
+		else //включаем мд
 		{
 			Inform2.SetActive(false);
-			HideButtonOUT();
-			OnButtonDown2();
+			buttonquant.SetActive(false);
+			OnButtonDownXYZ(variant);
 			IRspectrum.gameObject.SetActive(false);
 			buttonQ.SetActive(false);			
 		}
 		formatfile = i;
 	}	
+	
+	public void setvariant(int x)
+	{
+		variant = x;
+		if (formatfile == 1)
+		{
+			OnButtonDownOUT(variant);
+		}
+		else
+		{
+			OnButtonDownXYZ(variant);
+		}
+	}
 		
 	public void clearselection()
 	{	
 		lastselObj.GetComponent<Renderer>().material = MatNorm;
 		lastselObj=thePrefab;
+		selectedatom.text = "0";
+		lastselectedatom.text = "0";
 		if (ViewAtom==0)
 		{
 			foreach(var obj in selectedObjects)
@@ -1945,20 +1862,39 @@ public class ReadFile : MonoBehaviour
 
 	public void FileInformation()
 	{
-		FileInform.GetComponent<TMP_Text>().text = "Файл: " + FileName + "\n" + "Количество атомов:" + Number.ToString() + "\n" + "Числo фреймов:" + MaxFrameNum;
+		FileInform.GetComponent<TMP_Text>().text = " Файл: " + FileName + "\n" + " Количество атомов: " + Number.ToString() + "\n" + " Числo фреймов: " + MaxFrameNum;
 	}
 	
 	public void MakeNotion()
 	{
 		try
 		{			
-			File.AppendAllText(Application.persistentDataPath + "/Result.txt", "\n" + InformChoosen.GetComponent<TMP_Text>().text);
+			File.AppendAllText(Application.persistentDataPath + RecordF, "\n" + "Вариант " + variant.ToString() + "\n" + InformChoosen.GetComponent<TMP_Text>().text);
 			Inform.GetComponent<TMP_Text>().text = "Информация сохранена";
 		}
 		catch (Exception e)
 		{
             Console.WriteLine("The process failed: {0}", e.ToString());
 		}
+	}
+	
+	public void SetBoxColliderSize()
+	{
+		Vector3 point_A = mainCamera.ScreenPointToRay(Vector2.zero).origin;
+
+		// определяем размер коллайдера по ширине экрана
+		Vector3 point_B = mainCamera.ScreenPointToRay(new Vector2(Screen.width, 0)).origin;
+
+		float dist = Vector3.Distance(point_A, point_B);
+		boxCollider.size = new Vector3(dist, boxCollider.size.y, 0.1f);
+
+		// определяем размер бокса по высоте
+		point_B = mainCamera.ScreenPointToRay(new Vector2(0, Screen.height)).origin;
+
+		dist = Vector3.Distance(point_A, point_B);
+		boxCollider.size = new Vector3(boxCollider.size.x, dist, 0.1f);
+
+		boxCollider.center = new Vector3(0, 0, mainCamera.nearClipPlane);
 	}
 }
 
