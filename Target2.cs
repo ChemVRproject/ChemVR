@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine.EventSystems;
 
-public class Target2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
+public class Target2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler
 {
     private Renderer myrenderer;
 	private GameObject selected;
