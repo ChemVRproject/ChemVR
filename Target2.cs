@@ -10,45 +10,27 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine.EventSystems;
 
-public class Target2 : MonoBehaviour, IPointerEnterHandler,  IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
+public class Target2 : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler, IPointerExitHandler
 {
     private Renderer myrenderer;
-	private Material Norm;	
-	public Material FresnelM;
-	private GameObject Inform;
-	//private TMPro.TMP_Text newInform;
+	private GameObject selected;
+	private GameObject lastsel;
 
 	private void Start()
     {
         myrenderer = GetComponent<Renderer>();
+		selected = GameObject.Find("selectedatom");
+		lastsel = GameObject.Find("lastselectedatom");
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-	Norm = myrenderer.material;
-	myrenderer.material = FresnelM;
-	
+		lastsel.GetComponent<TMP_Text>().text = myrenderer.name;
     }
 
-	public void OnPointerDown(PointerEventData eventData)
+	public void OnPointerClick(PointerEventData eventData)
     {
-		//newInform = Instantiate<TMPro.TMP_Text>(Inform);
-		Norm = myrenderer.material;
-		myrenderer.material = FresnelM;
-		Inform = GameObject.Find("InformText");
-		Inform.GetComponent<TMP_Text>().text = "Атом:" + '\n' + myrenderer.name + '\n' + " Координаты:" + '\n' + myrenderer.transform.position;
-		
+		int a = int.Parse(selected.GetComponent<TMP_Text>().text)+1;
+		selected.GetComponent<TMP_Text>().text = a.ToString();	
 	}
-	
-   public void OnPointerUp(PointerEventData eventData)
-    {
-        myrenderer.material = Norm;
-		//Destroy(newInform);
-    }
-	
-	public void OnPointerExit(PointerEventData eventData)
-    {
-        myrenderer.material = Norm;
-		//Destroy(newInform);
-    }
 }
